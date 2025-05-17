@@ -1,0 +1,29 @@
+# Binaries
+/bin/
+/build/
+/metro-app
+
+# OS/Editor files
+.DS_Store
+.idea/
+*.swp
+*.swo
+.vscode/
+
+# Dependency files
+vendor/
+
+# Log files
+*.log
+
+# Env
+.env
+
+# Uploads
+/uploads/
+
+# Docker
+*.pid
+*.sock
+*.db
+docker-compose.override.yml

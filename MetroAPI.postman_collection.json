@@ -1,0 +1,65 @@
+{
+  "info": {
+    "name": "Metro API",
+    "_postman_id": "a1b2c3d4",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Register",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"hrd@metro.local\",\n  \"password\": \"admin123\",\n  \"role\": \"hr\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8282/api/register",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8282",
+          "path": ["api", "register"]
+        }
+      }
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"hrd@metro.local\",\n  \"password\": \"admin123\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8282/api/login",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8282",
+          "path": ["api", "login"]
+        }
+      }
+    },
+    {
+      "name": "Dashboard (protected)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+        ],
+        "url": {
+          "raw": "http://localhost:8282/api/dashboard",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8282",
+          "path": ["api", "dashboard"]
+        }
+      }
+    }
+  ]
+}
