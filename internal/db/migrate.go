@@ -8,12 +8,14 @@ import (
 
 func AutoMigrate(db *gorm.DB) {
 	err := db.AutoMigrate(
-		&models.User{},
-		&models.Attendance{},
+		&models.Company{},
 		&models.Employee{},
+		&models.Attendance{},
 		&models.Leave{},
 		&models.Letter{},
 		&models.Payslip{},
+		&models.User{},
+		&models.LetterTemplate{},
 	)
 	if err != nil {
 		log.Fatalf("❌ Failed to migrate tables: %v", err)

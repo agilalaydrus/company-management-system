@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+<head><title>Recommendation Letter</title></head>
+<body>
+<h1>Letter of Recommendation</h1>
+<p>To whom it may concern,</p>
+<p>This letter is to recommend <strong>{{.Employee.Name}}</strong>, who has been working with <strong>{{.Company.Name}}</strong> as a <strong>{{.Employee.Position}}</strong>.</p>
+<p>Date: {{.IssuedDate.Format "02 Jan 2006"}}</p>
+<p>Additional Notes: {{.Content}}</p>
+</body>
+</html>

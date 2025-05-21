@@ -43,6 +43,7 @@ func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
 		protected.POST("/letters", letter.CreateLetter(db))
 		protected.GET("/letters", letter.GetLettersFiltered(db))
 		protected.GET("/letters/:id/html", letter.GenerateLetterHTML(db))
+		protected.GET("/letters/:id/pdf", letter.ExportLetterPDF(db, "http://localhost:8080"))
 
 		// Payslip
 		protected.POST("/payslips", payslip.CreatePayslip(db))

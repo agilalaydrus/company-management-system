@@ -27,5 +27,6 @@ func main() {
 		port = "8080"
 	}
 	log.Println("✅ Server running on port :" + port)
-	router.Run(":" + port)
+	router.Run("0.0.0.0:" + port)
+
 }

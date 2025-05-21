@@ -8,7 +8,8 @@ type Leave struct {
 	StartDate  time.Time `gorm:"not null"`
 	EndDate    time.Time `gorm:"not null"`
 	Reason     string    `gorm:"type:text"`
-	Status     string    `gorm:"default:'pending'"` // pending, approved, rejected
+	Status     string    `gorm:"default:'pending'"`
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
+	Employee   Employee `gorm:"foreignKey:EmployeeID"`
 }

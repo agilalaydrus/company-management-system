@@ -9,4 +9,5 @@ type Attendance struct {
 	Lat        float64   `gorm:"not null"`
 	Long       float64   `gorm:"not null"`
 	Timestamp  time.Time `gorm:"autoCreateTime"`
+	Employee   Employee  `gorm:"foreignKey:EmployeeID"`
 }

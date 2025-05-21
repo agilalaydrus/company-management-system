@@ -15,10 +15,15 @@ func CreateEmployee(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+
 		if emp.JoinDate == nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "join_date is required"})
 			return
 		}
+
+		// Set default leave balance
+		emp.RemainingLeave = 12
+
 		if err := db.Create(&emp).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create employee"})
 			return
