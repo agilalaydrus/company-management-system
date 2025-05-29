@@ -1,4 +1,4 @@
-FROM golang:1.24.1
+FROM golang:1.24.2
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ COPY . .
 RUN apt-get update && apt-get install -y \
     xfonts-75dpi \
     xfonts-base \
-    wkhtmltopdf \
+   # wkhtmltopdf \
     && rm -rf /var/lib/apt/lists/*
 
 # 4. Build binary Go

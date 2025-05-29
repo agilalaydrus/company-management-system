@@ -13,8 +13,8 @@ type InventoryItem struct {
 	ResponsibleID *uint      `json:"responsible_id,omitempty"`
 	Responsible   *Employee  `gorm:"foreignKey:ResponsibleID" json:"responsible,omitempty"`
 	PurchaseDate  *time.Time `json:"purchase_date,omitempty"`
-	Value         float64    `json:"value,omitempty"`
-
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Price         float64    `json:"price"`
+	Value         float64    `json:"value"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
 }
