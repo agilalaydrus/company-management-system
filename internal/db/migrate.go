@@ -1,9 +1,10 @@
 package db
 
 import (
-	"gorm.io/gorm"
 	"log"
 	"metro-backend/internal/models"
+
+	"gorm.io/gorm"
 )
 
 func AutoMigrate(db *gorm.DB) {
@@ -16,6 +17,9 @@ func AutoMigrate(db *gorm.DB) {
 		&models.Payslip{},
 		&models.User{},
 		&models.LetterTemplate{},
+		&models.Warehouse{},
+		&models.InventoryItem{},
+		&models.ATKItem{},
 	)
 	if err != nil {
 		log.Fatalf("❌ Failed to migrate tables: %v", err)

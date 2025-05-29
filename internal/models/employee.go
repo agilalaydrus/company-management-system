@@ -17,6 +17,9 @@ type Employee struct {
 	Letters     []Letter     `gorm:"foreignKey:EmployeeID" json:"letters,omitempty"`
 	Payslips    []Payslip    `gorm:"foreignKey:EmployeeID" json:"payslips,omitempty"`
 
+	InventoryItems []InventoryItem `gorm:"foreignKey:ResponsibleID" json:"inventory_items,omitempty"`
+	ATKItems       []ATKItem       `gorm:"foreignKey:ResponsibleID" json:"atk_items,omitempty"`
+
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

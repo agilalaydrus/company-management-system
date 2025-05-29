@@ -33,19 +33,35 @@ func CreatePayslip(db *gorm.DB) gin.HandlerFunc {
 			GeneratedAt: time.Now(),
 		}
 
+		// Setelah menyimpan slip
 		if err := db.Create(&slip).Error; err != nil {
 			c.JSON(500, gin.H{"error": "failed to create payslip"})
 			return
 		}
 
-		c.JSON(201, slip)
+		// Ambil ulang slip dengan relasi employee dan company
+		var enriched models.Payslip
+		if err := db.
+			Preload("Employee").
+			Preload("Employee.Company").
+			First(&enriched, slip.ID).Error; err != nil {
+			c.JSON(500, gin.H{"error": "failed to retrieve enriched payslip"})
+			return
+		}
+
+		c.JSON(201, enriched)
+
 	}
 }
 
 func GetPayslips(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var payslips []models.Payslip
-		db.Order("generated_at desc").Find(&payslips)
+		db.
+			Preload("Employee").
+			Preload("Employee.Company").
+			Order("generated_at desc").
+			Find(&payslips)
 		c.JSON(200, payslips)
 	}
 }

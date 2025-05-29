@@ -3,15 +3,16 @@ package models
 import "time"
 
 type Payslip struct {
-	ID          uint   `gorm:"primaryKey"`
-	EmployeeID  uint   `gorm:"not null"`
-	Period      string `gorm:"size:20"` // format: YYYY-MM
-	BaseSalary  int    `gorm:"not null"`
-	Allowance   int
-	Deduction   int
-	TotalSalary int
-	GeneratedAt time.Time
+	ID          uint      `json:"ID"`
+	EmployeeID  uint      `json:"EmployeeID"`
+	Period      string    `json:"Period"`
+	BaseSalary  int       `json:"BaseSalary"`
+	Allowance   int       `json:"Allowance"`
+	Deduction   int       `json:"Deduction"`
+	TotalSalary int       `json:"TotalSalary"`
+	GeneratedAt time.Time `json:"GeneratedAt"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
-	Employee    Employee `gorm:"foreignKey:EmployeeID"`
+
+	Employee Employee `gorm:"foreignKey:EmployeeID" json:"Employee"`
 }
