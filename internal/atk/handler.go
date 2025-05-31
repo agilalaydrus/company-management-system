@@ -1,10 +1,10 @@
 package atk
 
 import (
+	"metro-backend/internal/models"
 	"net/http"
 	"strconv"
-
-	"metro-backend/internal/models"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -13,117 +13,199 @@ import (
 func Create(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input struct {
-			Name          string `json:"name" binding:"required"`
-			Unit          string `json:"unit"`
-			Quantity      int    `json:"quantity" binding:"required"`
-			WarehouseID   uint   `json:"warehouse_id" binding:"required"`
-			ResponsibleID *uint  `json:"responsible_id"`
+			Name          string  `json:"name" binding:"required"`
+			Category      string  `json:"category"`
+			Condition     string  `json:"condition"`
+			Quantity      int     `json:"quantity" binding:"required"`
+			Price         float64 `json:"price" binding:"required"`
+			WarehouseID   uint    `json:"warehouse_id" binding:"required"`
+			ResponsibleID *uint   `json:"responsible_id"`
+			PurchaseDate  *string `json:"purchase_date"` // format YYYY-MM-DD
 		}
+
 		if err := c.ShouldBindJSON(&input); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		atk := models.ATKItem{
-			Name:          input.Name,
-			Unit:          input.Unit,
-			Quantity:      input.Quantity,
-			WarehouseID:   input.WarehouseID,
-			ResponsibleID: input.ResponsibleID,
+		var purchaseDate *time.Time
+		if input.PurchaseDate != nil {
+			t, err := time.Parse("2006-01-02", *input.PurchaseDate)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid purchase_date format"})
+				return
+			}
+			purchaseDate = &t
 		}
 
-		if err := db.Create(&atk).Error; err != nil {
+		var existing models.ATKItem
+		err := db.Where("name = ? AND category = ? AND warehouse_id = ? AND responsible_id = ?",
+			input.Name, input.Category, input.WarehouseID, input.ResponsibleID).
+			First(&existing).Error
+
+		if err == nil {
+			existing.Quantity += input.Quantity
+			existing.Price = input.Price
+			existing.Value = float64(existing.Quantity) * input.Price
+			existing.UpdatedAt = time.Now()
+
+			if err := db.Save(&existing).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update ATK item"})
+				return
+			}
+
+			var updated models.ATKItem
+			if err := db.Preload("Warehouse.Company").Preload("Responsible.Company").
+				First(&updated, existing.ID).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch updated ATK item"})
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{"message": "ATK quantity updated", "item": updated})
+			return
+		}
+
+		value := float64(input.Quantity) * input.Price
+		newItem := models.ATKItem{
+			Name:          input.Name,
+			Category:      input.Category,
+			Condition:     input.Condition,
+			Quantity:      input.Quantity,
+			Price:         input.Price,
+			Value:         value,
+			WarehouseID:   input.WarehouseID,
+			ResponsibleID: input.ResponsibleID,
+			PurchaseDate:  purchaseDate,
+		}
+
+		if err := db.Create(&newItem).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create ATK item"})
 			return
 		}
 
-		c.JSON(http.StatusCreated, atk)
+		var result models.ATKItem
+		if err := db.Preload("Warehouse.Company").Preload("Responsible.Company").
+			First(&result, newItem.ID).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch ATK item"})
+			return
+		}
+
+		c.JSON(http.StatusCreated, gin.H{"message": "ATK item created", "item": result})
 	}
 }
 
 func List(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var atks []models.ATKItem
-		if err := db.Preload("Warehouse").Preload("Responsible").Find(&atks).Error; err != nil {
+		var items []models.ATKItem
+		if err := db.Preload("Warehouse.Company").Preload("Responsible.Company").
+			Find(&items).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list ATK items"})
 			return
 		}
-		c.JSON(http.StatusOK, atks)
+		c.JSON(http.StatusOK, items)
 	}
 }
 
 func Detail(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		idStr := c.Param("id")
-		id, err := strconv.Atoi(idStr)
+		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ATK item id"})
 			return
 		}
 
-		var atk models.ATKItem
-		if err := db.Preload("Warehouse").Preload("Responsible").First(&atk, id).Error; err != nil {
+		var item models.ATKItem
+		if err := db.Preload("Warehouse.Company").Preload("Responsible.Company").
+			First(&item, id).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "ATK item not found"})
 			return
 		}
 
-		c.JSON(http.StatusOK, atk)
+		c.JSON(http.StatusOK, item)
 	}
 }
 
 func Update(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		idStr := c.Param("id")
-		id, err := strconv.Atoi(idStr)
+		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ATK item id"})
 			return
 		}
 
-		var atk models.ATKItem
-		if err := db.First(&atk, id).Error; err != nil {
+		var item models.ATKItem
+		if err := db.First(&item, id).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "ATK item not found"})
 			return
 		}
 
 		var input struct {
-			Name          string `json:"name"`
-			Unit          string `json:"unit"`
-			Quantity      int    `json:"quantity"`
-			WarehouseID   uint   `json:"warehouse_id"`
-			ResponsibleID *uint  `json:"responsible_id"`
+			Name          string   `json:"name"`
+			Category      string   `json:"category"`
+			Condition     string   `json:"condition"`
+			Quantity      int      `json:"quantity"`
+			WarehouseID   uint     `json:"warehouse_id"`
+			ResponsibleID *uint    `json:"responsible_id"`
+			PurchaseDate  *string  `json:"purchase_date"`
+			Price         *float64 `json:"price"`
 		}
+
 		if err := c.ShouldBindJSON(&input); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
 		if input.Name != "" {
-			atk.Name = input.Name
+			item.Name = input.Name
 		}
-		if input.Unit != "" {
-			atk.Unit = input.Unit
+		if input.Category != "" {
+			item.Category = input.Category
+		}
+		if input.Condition != "" {
+			item.Condition = input.Condition
 		}
 		if input.Quantity != 0 {
-			atk.Quantity = input.Quantity
+			item.Quantity = input.Quantity
+		}
+		if input.Price != nil {
+			item.Price = *input.Price
+		}
+		if input.Price != nil || input.Quantity != 0 {
+			item.Value = item.Price * float64(item.Quantity)
 		}
 		if input.WarehouseID != 0 {
-			atk.WarehouseID = input.WarehouseID
+			item.WarehouseID = input.WarehouseID
 		}
-		atk.ResponsibleID = input.ResponsibleID
+		item.ResponsibleID = input.ResponsibleID
 
-		if err := db.Save(&atk).Error; err != nil {
+		if input.PurchaseDate != nil {
+			t, err := time.Parse("2006-01-02", *input.PurchaseDate)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid purchase_date format"})
+				return
+			}
+			item.PurchaseDate = &t
+		}
+
+		if err := db.Save(&item).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update ATK item"})
 			return
 		}
-		c.JSON(http.StatusOK, atk)
+
+		var result models.ATKItem
+		if err := db.Preload("Warehouse.Company").Preload("Responsible.Company").
+			First(&result, item.ID).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch updated ATK item"})
+			return
+		}
+
+		c.JSON(http.StatusOK, result)
 	}
 }
 
 func Delete(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		idStr := c.Param("id")
-		id, err := strconv.Atoi(idStr)
+		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ATK item id"})
 			return
@@ -133,6 +215,7 @@ func Delete(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete ATK item"})
 			return
 		}
-		c.Status(http.StatusNoContent)
+
+		c.JSON(http.StatusOK, gin.H{"message": "ATK item deleted successfully"})
 	}
 }
